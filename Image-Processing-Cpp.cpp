@@ -17,9 +17,14 @@ int main(int argc, char* argv[]){
 	const char* args_2[2] = { "--gauss-blur", "-gb" };
 	const char* args_3[2] = { "--average-blur", "-ab" };
 	const char* args_4[2] = { "--median-blur", "-mb" };
-	const char* args_5[2] = {"--gamma", "-g"};
+	const char* args_5[2] = { "--gamma", "-g" };
 	const char* args_6[2] = { "--linear", "-l" };
 	const char* args_7[2] = { "--clahe", "-ae" };
+	const char* args_8[2] = { "--hist-equ", "-he" };
+	const char* args_9[1] = { "--hue" };
+	const char* args_10[2] = { "--saturation", "-sat" };
+	const char* args_11[2] = { "--vibrance", "-vib" };
+
 
 	const char* args_19[2] = { "--save", "-s" };
 
@@ -30,6 +35,11 @@ int main(int argc, char* argv[]){
 	int args_5_len = sizeof(args_5) / sizeof(args_5[0]);
 	int args_6_len = sizeof(args_6) / sizeof(args_6[0]);
 	int args_7_len = sizeof(args_7) / sizeof(args_7[0]);
+	int args_8_len = sizeof(args_8) / sizeof(args_8[0]);
+	int args_9_len = sizeof(args_9) / sizeof(args_9[0]);
+	int args_10_len = sizeof(args_10) / sizeof(args_10[0]);
+	int args_11_len = sizeof(args_11) / sizeof(args_11[0]);
+
 	int args_19_len = sizeof(args_19) / sizeof(args_19[0]);
 
 	string filename = "";
@@ -53,23 +63,28 @@ int main(int argc, char* argv[]){
 	double clipLimit = 2.0;
 	int tileGridSize = 2;
 
+	bool do_hist_equ = false;
+
+	bool do_hue_adjust = false;
+	double hue = 1.0;
+
+	bool do_saturation_adjust = false;
+	double saturation = 1.0;
+
+	bool do_vibrance_adjust = false;
+	double vibrance = 1.0;
+
 	bool save = false;
 
 	for (int i = 0; i < argc; i++) {
 
-		for (int j = 0; j < args_1_len; j++) {
-			if (strcmp(args_1[j], argv[i]) == 0) {
-				filename = argv[i + 1];
-			}
-		}
+		for (int j = 0; j < args_1_len; j++) if (strcmp(args_1[j], argv[i]) == 0) filename = argv[i + 1];
 
 		for (int j = 0; j < args_2_len; j++) {
 			if (strcmp(args_2[j], argv[i]) == 0) {
 				do_gaussian_blur = true;
 				gaussian_blur_kernel_size = stoi(argv[i + 1]);
-				if (gaussian_blur_kernel_size % 2 == 0) {
-					gaussian_blur_kernel_size++;
-				}
+				if (gaussian_blur_kernel_size % 2 == 0) gaussian_blur_kernel_size++;
 			}
 		}
 
@@ -84,9 +99,7 @@ int main(int argc, char* argv[]){
 			if (strcmp(args_4[j], argv[i]) == 0) {
 				do_median_blur = true;
 				median_blur_kernel_size = stoi(argv[i + 1]);
-				if (median_blur_kernel_size % 2 == 0) {
-					median_blur_kernel_size++;
-				}
+				if (median_blur_kernel_size % 2 == 0) median_blur_kernel_size++;
 			}
 		}
 
@@ -101,12 +114,8 @@ int main(int argc, char* argv[]){
 			if (strcmp(args_6[j], argv[i]) == 0) {
 				do_linear_adjust = true;
 				linear_alpha = stod(argv[i + 1]);
-				if (linear_alpha > 255) {
-					linear_alpha = 255.0;
-				}
-				if (linear_alpha < 0) {
-					linear_alpha = 0.0;
-				}
+				if (linear_alpha > 255) linear_alpha = 255.0;
+				if (linear_alpha < 0) linear_alpha = 0.0;
 			}
 		}
 
@@ -118,11 +127,30 @@ int main(int argc, char* argv[]){
 			}
 		}
 
-		for (int j = 0; j < args_19_len; j++) {
-			if (strcmp(args_19[j], argv[i]) == 0) {
-				save = true;
+		for (int j = 0; j < args_8_len; j++) if (strcmp(args_8[j], argv[i]) == 0) do_hist_equ = true;
+		
+		for (int j = 0; j < args_9_len; j++) {
+			if (strcmp(args_9[j], argv[i]) == 0) {
+				do_hue_adjust = true;
+				hue = stod(argv[i + 1]);
 			}
 		}
+
+		for (int j = 0; j < args_10_len; j++) {
+			if (strcmp(args_10[j], argv[i]) == 0) {
+				do_saturation_adjust = true;
+				saturation = stod(argv[i + 1]);
+			}
+		}
+
+		for (int j = 0; j < args_11_len; j++) {
+			if (strcmp(args_11[j], argv[i]) == 0) {
+				do_vibrance_adjust = true;
+				vibrance = stod(argv[i + 1]);
+			}
+		}
+
+		for (int j = 0; j < args_19_len; j++) if (strcmp(args_19[j], argv[i]) == 0) save = true;
 	}
 
 	assert(filename.empty() != 1);
@@ -140,12 +168,17 @@ int main(int argc, char* argv[]){
 
 	cv::Mat image = image_handler.read_image(READ_PATH);
 	
-	if (do_gaussian_blur) image = image_processor.gauss_blur(image, gaussian_blur_kernel_size);
-	if (do_average_blur)  image = image_processor.average_blur(image, average_blur_kernel_size);
-	if (do_median_blur)   image = image_processor.median_blur(image, median_blur_kernel_size);
-	if (do_gamma_adjust)  image = image_processor.gammaAdjust(image, gamma_alpha);
-	if (do_linear_adjust) image = image_processor.linearContrastAdjust(image, linear_alpha);
-	if (do_clahe)         image = image_processor.adaptiveEqualization(image, clipLimit, tileGridSize);
+	if (do_gaussian_blur)	  image = image_processor.gauss_blur(image, gaussian_blur_kernel_size);
+	if (do_average_blur)	  image = image_processor.average_blur(image, average_blur_kernel_size);
+	if (do_median_blur)		  image = image_processor.median_blur(image, median_blur_kernel_size);
+	if (do_gamma_adjust)	  image = image_processor.gammaAdjust(image, gamma_alpha);
+	if (do_linear_adjust)	  image = image_processor.linearContrastAdjust(image, linear_alpha);
+	if (do_clahe)             image = image_processor.adaptiveEqualization(image, clipLimit, tileGridSize);
+	if (do_hist_equ)          image = image_processor.histogramEqualization(image);
+	if (do_hue_adjust)        image = image_processor.adjust_hue(image, hue);
+	if (do_saturation_adjust) image = image_processor.adjust_saturation(image, saturation);
+	if (do_vibrance_adjust)   image = image_processor.adjust_vibrance(image, vibrance);
+
 
 	if (!save)
 		image_handler.show_image(image_handler.downscale(image));

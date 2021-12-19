@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <algorithm>
 #include <Windows.h>
 #include <direct.h>
 #include <cmath>
@@ -102,11 +103,68 @@ public:
 		cv::split(image, bgr_split);
 
 		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(clipLimit, cv::Size(tileGridSize, tileGridSize));
-		for (int c = 0; c < image.channels(); c++) {
+		for (int c = 0; c < image.channels(); c++) 
 			clahe->apply(bgr_split[c], proc_bgr_split[c]);
-		}
 		cv::merge(proc_bgr_split, proc_image);
 
+		return proc_image;
+	}
+
+	cv::Mat histogramEqualization(cv::Mat image) {
+		cv::Mat proc_image = cv::Mat::zeros(image.size(), image.type());
+
+		std::vector<cv::Mat> proc_bgr_split(3);
+		cv::split(proc_image, proc_bgr_split);
+
+		std::vector<cv::Mat> bgr_split(3);
+		cv::split(image, bgr_split);
+
+		for (int c = 0; c < image.channels(); c++)
+			cv::equalizeHist(bgr_split[c], proc_bgr_split[c]);
+
+		cv::merge(proc_bgr_split, proc_image);
+		return proc_image;
+	}
+
+	cv::Mat adjust_hue(cv::Mat image, double hue) {
+		cv::Mat proc_image = cv::Mat::zeros(image.size(), image.type());
+		cv::cvtColor(image, proc_image, cv::COLOR_BGR2HSV_FULL);
+
+		for (int y = 0; y < image.rows; y++) {
+			for (int x = 0; x < image.cols; x++) {
+				proc_image.at<cv::Vec3b>(y, x)[0] = cv::saturate_cast<uchar>(proc_image.at<cv::Vec3b>(y, x)[0] * hue);
+			}
+		}
+
+		cv::cvtColor(proc_image, proc_image, cv::COLOR_HSV2BGR_FULL);
+		return proc_image;
+	}
+
+	cv::Mat adjust_saturation(cv::Mat image, double saturation) {
+		cv::Mat proc_image = cv::Mat::zeros(image.size(), image.type());
+		cv::cvtColor(image, proc_image, cv::COLOR_BGR2HSV_FULL);
+
+		for (int y = 0; y < image.rows; y++) {
+			for (int x = 0; x < image.cols; x++) {
+				proc_image.at<cv::Vec3b>(y, x)[1] = cv::saturate_cast<uchar>(proc_image.at<cv::Vec3b>(y, x)[1] * saturation);
+			}
+		}
+
+		cv::cvtColor(proc_image, proc_image, cv::COLOR_HSV2BGR_FULL);
+		return proc_image;
+	}
+
+	cv::Mat adjust_vibrance(cv::Mat image, double vibrance) {
+		cv::Mat proc_image = cv::Mat::zeros(image.size(), image.type());
+		cv::cvtColor(image, proc_image, cv::COLOR_BGR2HSV_FULL);
+
+		for (int y = 0; y < image.rows; y++) {
+			for (int x = 0; x < image.cols; x++) {
+				proc_image.at<cv::Vec3b>(y, x)[2] = cv::saturate_cast<uchar>(proc_image.at<cv::Vec3b>(y, x)[2] * vibrance);
+			}
+		}
+
+		cv::cvtColor(proc_image, proc_image, cv::COLOR_HSV2BGR_FULL);
 		return proc_image;
 	}
 };
