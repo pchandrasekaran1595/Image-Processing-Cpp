@@ -24,9 +24,10 @@ int main(int argc, char* argv[]){
 	const char* args_9[1] = { "--hue" };
 	const char* args_10[2] = { "--saturation", "-sat" };
 	const char* args_11[2] = { "--vibrance", "-vib" };
-
-
-	const char* args_19[2] = { "--save", "-s" };
+	const char* args_12[2] = { "--sharpen", "-sh" };
+	const char* args_13[2] = { "--width", "-w" };
+	const char* args_14[2] = { "--height", "-h" };
+	const char* args_15[2] = { "--save", "-s" };
 
 	int args_1_len = sizeof(args_1) / sizeof(args_1[0]);
 	int args_2_len = sizeof(args_2) / sizeof(args_2[0]);
@@ -39,8 +40,10 @@ int main(int argc, char* argv[]){
 	int args_9_len = sizeof(args_9) / sizeof(args_9[0]);
 	int args_10_len = sizeof(args_10) / sizeof(args_10[0]);
 	int args_11_len = sizeof(args_11) / sizeof(args_11[0]);
-
-	int args_19_len = sizeof(args_19) / sizeof(args_19[0]);
+	int args_12_len = sizeof(args_12) / sizeof(args_12[0]);
+	int args_13_len = sizeof(args_13) / sizeof(args_13[0]);
+	int args_14_len = sizeof(args_14) / sizeof(args_14[0]);
+	int args_15_len = sizeof(args_15) / sizeof(args_15[0]);
 
 	string filename = "";
 
@@ -73,6 +76,13 @@ int main(int argc, char* argv[]){
 
 	bool do_vibrance_adjust = false;
 	double vibrance = 1.0;
+
+	bool do_sharpen = false;
+	int sharpen_kernel_size = 1;
+
+	bool do_resize_w = false;
+	bool do_resize_h = false;
+	int width, height;
 
 	bool save = false;
 
@@ -150,7 +160,29 @@ int main(int argc, char* argv[]){
 			}
 		}
 
-		for (int j = 0; j < args_19_len; j++) if (strcmp(args_19[j], argv[i]) == 0) save = true;
+		for (int j = 0; j < args_12_len; j++) {
+			if (strcmp(args_12[j], argv[i]) == 0) {
+				do_sharpen = true;
+				sharpen_kernel_size = stoi(argv[i + 1]);
+				if (sharpen_kernel_size % 2 == 0) sharpen_kernel_size++;
+			}
+		}
+
+		for (int j = 0; j < args_13_len; j++) {
+			if (strcmp(args_13[j], argv[i]) == 0) {
+				do_resize_w = true;
+				width = stoi(argv[i + 1]);
+			}
+		}
+
+		for (int j = 0; j < args_14_len; j++) {
+			if (strcmp(args_14[j], argv[i]) == 0) {
+				do_resize_h = true;
+				height = stoi(argv[i + 1]);
+			}
+		}
+
+		for (int j = 0; j < args_15_len; j++) if (strcmp(args_15[j], argv[i]) == 0) save = true;
 	}
 
 	assert(filename.empty() != 1);
@@ -159,15 +191,19 @@ int main(int argc, char* argv[]){
 	string SAVE_PATH = string(path.begin(), path.end()) + "\\Processed";
 
 	const char* save_path_array = SAVE_PATH.c_str();
-	if (_mkdir(save_path_array) == -1)
-		cout << "Directory Already Present !!!!";
+	int make_directory = _mkdir(save_path_array);
+	if (make_directory != -1)
+		cout << endl << "Creating Save Directory" << endl;
 
 
 	ImageHandler image_handler;
 	ImageProcessor image_processor;
 
 	cv::Mat image = image_handler.read_image(READ_PATH);
-	
+
+	if (image.empty())
+		cout << endl << "Failed to open Image; possibly not present in directory." << endl;
+
 	if (do_gaussian_blur)	  image = image_processor.gauss_blur(image, gaussian_blur_kernel_size);
 	if (do_average_blur)	  image = image_processor.average_blur(image, average_blur_kernel_size);
 	if (do_median_blur)		  image = image_processor.median_blur(image, median_blur_kernel_size);
@@ -178,13 +214,22 @@ int main(int argc, char* argv[]){
 	if (do_hue_adjust)        image = image_processor.adjust_hue(image, hue);
 	if (do_saturation_adjust) image = image_processor.adjust_saturation(image, saturation);
 	if (do_vibrance_adjust)   image = image_processor.adjust_vibrance(image, vibrance);
+	if (do_sharpen)           image = image_processor.sharpen(image, sharpen_kernel_size);
 
+	if (do_resize_w) {
+		int h = image.rows;
+		image = image_processor.resize_image(image, width, h);
+	}
+	if (do_resize_h) {
+		int w = image.cols;
+		image = image_processor.resize_image(image, w, height);
+	}
+	if (do_resize_w && do_resize_h) image = image_processor.resize_image(image, width, height);
 
 	if (!save)
 		image_handler.show_image(image_handler.downscale(image));
 	else
 		image_handler.save_image(SAVE_PATH + "\\Processed.jpg", image);
 		
-
 	return 0;
 }

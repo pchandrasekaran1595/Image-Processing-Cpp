@@ -167,4 +167,29 @@ public:
 		cv::cvtColor(proc_image, proc_image, cv::COLOR_HSV2BGR_FULL);
 		return proc_image;
 	}
+
+	cv::Mat resize_image(cv::Mat image, int width, int height) {
+		cv::Mat proc_image;
+		cv::resize(image, proc_image, cv::Size(width, height), cv::INTER_AREA);
+		return proc_image;
+	}
+
+	cv::Mat sharpen(cv::Mat image, int kernel_size) {
+		cv::Mat proc_image = cv::Mat::zeros(image.size(), image.type());
+		cv::Mat kernel = cv::Mat::zeros(cv::Size(kernel_size, kernel_size), CV_16SC1);
+
+		for (int y = 0; y < kernel.rows; y++) {
+			for (int x = 0; x < kernel.cols; x++) {
+				if (x == int(kernel_size / 2) || y == int(kernel_size / 2) && x != y) {
+					kernel.at<short>(y, x) = -1;
+				}
+				if (x == int(kernel_size / 2) && y == int(kernel_size / 2)) {
+					kernel.at<short>(y, x) = ((kernel_size - 1) * 2) + 1;
+				}
+			}
+		}
+
+		cv::filter2D(image, proc_image, -1, kernel);
+		return proc_image;
+	}
 };
