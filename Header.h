@@ -1,9 +1,9 @@
 #pragma once
 
-#include "iostream"
-#include "string"
-#include "Windows.h"
-#include "direct.h"
+#include <iostream>
+#include <string>
+#include <Windows.h>
+#include <direct.h>
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui.hpp"
 
