@@ -206,7 +206,7 @@ int main(int argc, char* argv[]){
 
 	if (do_gaussian_blur)	  image = image_processor.gauss_blur(image, gaussian_blur_kernel_size);
 	if (do_average_blur)	  image = image_processor.average_blur(image, average_blur_kernel_size);
-	if (do_median_blur)		  image = image_processor.median_blur(image, median_blur_kernel_size);
+	if (do_median_blur)       image = image_processor.median_blur(image, median_blur_kernel_size);
 	if (do_gamma_adjust)	  image = image_processor.gammaAdjust(image, gamma_alpha);
 	if (do_linear_adjust)	  image = image_processor.linearContrastAdjust(image, linear_alpha);
 	if (do_clahe)             image = image_processor.adaptiveEqualization(image, clipLimit, tileGridSize);
